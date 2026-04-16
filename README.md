@@ -1,12 +1,5 @@
 # Future Envelope
 
-> *Write to the future. Let time be the courier.*
-
-A full-stack Flask web app to compose emails today and deliver them at any future time.
-
-
-# Quick Start (Windows with Anaconda)
-
 # How to Use
 1. Extract the zip to a folder 
 2. Double-click **`run_windows.bat`**
