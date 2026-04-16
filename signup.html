@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Future Envelope{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  {% if current_user.is_authenticated %}
+  <nav class="navbar">
+    <a href="{{ url_for('main.dashboard') }}" class="nav-brand">✉ Future Envelope</a>
+    <div class="nav-links">
+      <a href="{{ url_for('main.dashboard') }}">Inbox</a>
+      <a href="{{ url_for('main.compose') }}" class="btn-compose">+ Compose</a>
+      <a href="{{ url_for('main.profile') }}" class="nav-user">{{ current_user.display_name }} ⚙</a>
+      <a href="{{ url_for('main.logout') }}" class="nav-logout">Logout</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

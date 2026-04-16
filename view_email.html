@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Edit Email · Future Envelope{% endblock %}
+{% block content %}
+<div class="compose-page">
+  <div class="compose-card">
+    <div class="compose-header">
+      <h1>✏️ Edit Scheduled Message</h1>
+      <p>Unseal, revise, and reseal before it's too late.</p>
+    </div>
+
+    <form method="POST" class="compose-form" id="compose-form">
+
+      <div class="private-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" name="is_private" id="is_private"
+                 {% if email.is_private %}checked{% endif %}>
+          <span class="toggle-switch"></span>
+          <span>📬 Private Letter to Self</span>
+        </label>
+      </div>
+
+      <div class="form-group" id="recipient-group">
+        <label for="recipient">To</label>
+        <input type="email" id="recipient" name="recipient"
+               value="{{ email.recipient }}" placeholder="recipient@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="subject">Subject</label>
+        <input type="text" id="subject" name="subject" required
+               value="{{ email.subject }}">
+      </div>
+
+      <div class="form-group">
+        <label for="body">Your Message</label>
+        <textarea id="body" name="body" required rows="10">{{ email.body }}</textarea>
+        <div class="char-counter"><span id="char-count">{{ email.body|length }}</span> characters</div>
+      </div>
+
+      <div class="form-group">
+        <label for="scheduled_at">📅 Deliver On</label>
+        <input type="datetime-local" id="scheduled_at" name="scheduled_at" required
+               value="{{ email.scheduled_at.strftime('%Y-%m-%dT%H:%M') }}">
+      </div>
+
+      <div class="presets">
+        <span class="preset-label">Quick presets:</span>
+        <button type="button" class="preset-btn" data-offset="3600">1 Hour</button>
+        <button type="button" class="preset-btn" data-offset="86400">Tomorrow</button>
+        <button type="button" class="preset-btn" data-offset="604800">1 Week</button>
+        <button type="button" class="preset-btn" data-offset="2592000">1 Month</button>
+        <button type="button" class="preset-btn" data-offset="31536000">1 Year</button>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary">Save Changes →</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>initComposePage();</script>
+{% endblock %}

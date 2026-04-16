@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Compose · Future Envelope{% endblock %}
+{% block content %}
+<div class="compose-page">
+  <div class="compose-card">
+    <div class="compose-header">
+      <h1>✍ Write a Future Message</h1>
+      <p>Seal your words today. They'll be delivered exactly when you decide.</p>
+    </div>
+
+    <form method="POST" class="compose-form" id="compose-form" enctype="multipart/form-data">
+
+      <!-- Private mode toggle -->
+      <div class="private-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" name="is_private" id="is_private"
+                 {% if prefill.get('is_private') %}checked{% endif %}>
+          <span class="toggle-switch"></span>
+          <span>📬 Private Letter to Self</span>
+        </label>
+        <small>When enabled, the email is sent to your own address — a time capsule for future you.</small>
+      </div>
+
+      <!-- Recipient (hidden when private) -->
+      <div class="form-group" id="recipient-group">
+        <label for="recipient">To</label>
+        <input type="email" id="recipient" name="recipient"
+               value="{{ prefill.get('recipient', '') }}"
+               placeholder="recipient@example.com">
+      </div>
+
+      <!-- Subject -->
+      <div class="form-group">
+        <label for="subject">Subject</label>
+        <input type="text" id="subject" name="subject" required
+               value="{{ prefill.get('subject', '') }}"
+               placeholder="A message from your past self…">
+      </div>
+
+      <!-- Body -->
+      <div class="form-group">
+        <label for="body">Your Message</label>
+        <textarea id="body" name="body" required rows="10"
+                  placeholder="Dear future me, / Dear [Name],&#10;&#10;By the time you read this…">{{ prefill.get('body', '') }}</textarea>
+        <div class="char-counter"><span id="char-count">0</span> characters</div>
+      </div>
+
+      <!-- Scheduled delivery -->
+      <div class="form-group">
+        <label for="scheduled_at">📅 Deliver On</label>
+        <input type="datetime-local" id="scheduled_at" name="scheduled_at" required
+               value="{{ prefill.get('scheduled_at', '') }}"
+               min="{{ now.strftime('%Y-%m-%dT%H:%M') }}">
+        <small>All times are in your local timezone. The system converts to UTC internally.</small>
+      </div>
+
+      <!-- Quick presets -->
+      <!-- Encryption toggle -->
+      <div class="private-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" name="is_encrypted" id="is_encrypted"
+                 {% if prefill.get('is_encrypted') %}checked{% endif %}>
+          <span class="toggle-switch"></span>
+          <span>🔒 Encrypt this message</span>
+        </label>
+        <small>Body is encrypted at rest using AES-128. The recipient receives decrypted text.</small>
+      </div>
+
+      <!-- File attachments -->
+      <div class="form-group">
+        <label for="attachments">📎 Attachments <small>(optional · max 3 files · 10 MB each)</small></label>
+        <input type="file" id="attachments" name="attachments" multiple
+               accept="*/*" class="file-input">
+        <div id="file-preview" class="file-preview"></div>
+      </div>
+
+      <div class="presets">
+        <span class="preset-label">Quick presets:</span>
+        <button type="button" class="preset-btn" data-offset="3600">1 Hour</button>
+        <button type="button" class="preset-btn" data-offset="86400">Tomorrow</button>
+        <button type="button" class="preset-btn" data-offset="604800">1 Week</button>
+        <button type="button" class="preset-btn" data-offset="2592000">1 Month</button>
+        <button type="button" class="preset-btn" data-offset="31536000">1 Year</button>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary">Seal &amp; Schedule →</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  initComposePage();
+</script>
+{% endblock %}

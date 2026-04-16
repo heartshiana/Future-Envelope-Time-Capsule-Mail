@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Profile · Future Envelope{% endblock %}
+{% block content %}
+<div class="compose-page">
+  <div class="compose-card">
+    <div class="compose-header">
+      <h1>⚙️ Account Settings</h1>
+      <p>Manage your preferences and security options.</p>
+    </div>
+
+    <!-- Stats summary -->
+    <div class="stats-bar" style="margin-bottom:2rem;">
+      <div class="stat">
+        <span class="stat-num">{{ stats.total }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">{{ stats.scheduled }}</span>
+        <span class="stat-label">Pending</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">{{ stats.sent }}</span>
+        <span class="stat-label">Sent</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">{{ stats.failed }}</span>
+        <span class="stat-label">Failed</span>
+      </div>
+    </div>
+
+    <form method="POST" class="compose-form">
+
+      <!-- Display name -->
+      <div class="form-group">
+        <label for="display_name">Display Name</label>
+        <input type="text" id="display_name" name="display_name"
+               value="{{ current_user.display_name }}" required>
+      </div>
+
+      <!-- Readonly email -->
+      <div class="form-group">
+        <label>Email Address <small>(cannot change)</small></label>
+        <input type="email" value="{{ current_user.email }}" disabled
+               style="opacity:0.6;cursor:not-allowed;">
+      </div>
+
+      <!-- Timezone -->
+      <div class="form-group">
+        <label for="timezone">🌍 Timezone</label>
+        <select id="timezone" name="timezone">
+          {% for tz in timezones %}
+          <option value="{{ tz }}" {% if tz == current_user.timezone %}selected{% endif %}>
+            {{ tz }}
+          </option>
+          {% endfor %}
+        </select>
+        <small>Used for display purposes. Scheduling always stores UTC internally.</small>
+      </div>
+
+      <!-- Notification window -->
+      <div class="form-group">
+        <label for="notify_before_hours">🔔 Pre-send Reminder</label>
+        <select id="notify_before_hours" name="notify_before_hours">
+          <option value="0"   {% if current_user.notify_before_hours == 0   %}selected{% endif %}>Off</option>
+          <option value="1"   {% if current_user.notify_before_hours == 1   %}selected{% endif %}>1 hour before</option>
+          <option value="6"   {% if current_user.notify_before_hours == 6   %}selected{% endif %}>6 hours before</option>
+          <option value="24"  {% if current_user.notify_before_hours == 24  %}selected{% endif %}>24 hours before</option>
+          <option value="48"  {% if current_user.notify_before_hours == 48  %}selected{% endif %}>48 hours before</option>
+          <option value="168" {% if current_user.notify_before_hours == 168 %}selected{% endif %}>1 week before</option>
+        </select>
+        <small>We'll email you a reminder to your account address before each scheduled message sends.</small>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--sepia);margin:0.5rem 0;">
+
+      <h3 style="font-family:var(--font-display);font-size:1.1rem;color:var(--ink-light);">
+        🔑 Change Password <small style="font-size:0.8rem;">(leave blank to keep current)</small>
+      </h3>
+
+      <div class="form-group">
+        <label for="current_password">Current Password</label>
+        <input type="password" id="current_password" name="current_password"
+               placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <div class="form-group">
+        <label for="new_password">New Password</label>
+        <input type="password" id="new_password" name="new_password"
+               placeholder="••••••••" autocomplete="new-password" minlength="6">
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password">Confirm New Password</label>
+        <input type="password" id="confirm_password" name="confirm_password"
+               placeholder="••••••••" autocomplete="new-password">
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">← Back</a>
+        <button type="submit" class="btn-primary">Save Settings →</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}{{ email.subject }} · Future Envelope{% endblock %}
+{% block content %}
+<div class="view-page">
+  <div class="letter-wrapper">
+
+    <!-- Envelope flap decoration -->
+    <div class="letter-flap"></div>
+
+    <div class="letter-body">
+      <div class="letter-meta">
+        {% if email.is_private %}
+          <span class="badge badge-private">📬 Private Letter</span>
+        {% endif %}
+        {% if email.is_encrypted %}
+          <span class="badge badge-enc">🔒 Encrypted</span>
+        {% endif %}
+        <span class="letter-status status-{{ email.status }}">
+          {% if email.status == 'scheduled' %}⏳ Scheduled
+          {% elif email.status == 'sent' %}✅ Delivered
+          {% else %}❌ Failed{% endif %}
+        </span>
+      </div>
+
+      <h1 class="letter-subject">{{ email.subject }}</h1>
+
+      <div class="letter-addresses">
+        <div><strong>To:</strong> {{ email.recipient }}</div>
+        <div><strong>Composed:</strong> {{ email.created_at.strftime('%B %d, %Y') }}</div>
+        <div>
+          <strong>
+            {% if email.status == 'sent' %}Delivered:
+            {% else %}Scheduled:{% endif %}
+          </strong>
+          {% if email.status == 'sent' and email.sent_at %}
+            {{ email.sent_at.strftime('%B %d, %Y at %H:%M UTC') }}
+          {% else %}
+            {{ email.scheduled_at.strftime('%B %d, %Y at %H:%M UTC') }}
+          {% endif %}
+        </div>
+      </div>
+
+      {% if email.status == 'scheduled' %}
+      <div class="letter-countdown">
+        <div class="big-countdown" data-target="{{ email.scheduled_at.isoformat() }}">
+          Calculating…
+        </div>
+        <p>until delivery</p>
+      </div>
+      {% endif %}
+
+      <hr class="letter-divider">
+
+      <div class="letter-content">
+        {% if email.is_encrypted %}
+          {% set display_body = email.body %}
+          {# Decrypt for display — use a view helper via Jinja global #}
+          {{ display_body | decrypt_for_display | replace('\n','<br>') | safe }}
+        {% else %}
+          {{ email.body | replace('\n', '<br>') | safe }}
+        {% endif %}
+      </div>
+
+      {% if email.status == 'failed' and email.error_message %}
+      <div class="error-box">
+        <strong>⚠ Delivery Error:</strong> {{ email.error_message }}
+        <p>The system will retry up to 3 times automatically.</p>
+      </div>
+      {% endif %}
+
+      {% set att_list = email.attachments.all() %}
+      {% if att_list %}
+      <div class="attachments-box">
+        <h4 class="att-title">📎 Attachments ({{ att_list|length }})</h4>
+        {% for att in att_list %}
+        <div class="att-row">
+          <span class="att-icon">{{ '🖼' if att.mime_type.startswith('image') else ('📄' if 'pdf' in att.mime_type else '📁') }}</span>
+          <span class="att-name">{{ att.filename }}</span>
+          <span class="att-size">{{ att.size_human }}</span>
+          {% if email.status == 'scheduled' %}
+          <a href="{{ url_for('main.download_attachment', att_id=att.id) }}" class="btn-sm">Download</a>
+          <form method="POST" action="{{ url_for('main.delete_attachment', att_id=att.id) }}"
+                onsubmit="return confirm('Remove this attachment?')" style="display:inline">
+            <button type="submit" class="btn-sm btn-delete">✕</button>
+          </form>
+          {% else %}
+          <a href="{{ url_for('main.download_attachment', att_id=att.id) }}" class="btn-sm">Download</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div><!-- /letter-body -->
+  </div><!-- /letter-wrapper -->
+
+  <div class="view-actions">
+    <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">← Back</a>
+    {% if email.status == 'scheduled' %}
+      <a href="{{ url_for('main.edit_email', email_id=email.id) }}" class="btn-primary">✏️ Edit</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  // Start countdown if there's a big-countdown element
+  document.querySelectorAll('.big-countdown').forEach(el => {
+    updateCountdown(el);
+    setInterval(() => updateCountdown(el), 1000);
+  });
+</script>
+{% endblock %}

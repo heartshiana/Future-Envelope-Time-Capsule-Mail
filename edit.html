@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Sign Up · Future Envelope{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-seal">📮</div>
+    <h1 class="auth-title">Create Account</h1>
+    <p class="auth-subtitle">Begin sealing your time-capsule messages.</p>
+
+    <form method="POST" class="auth-form">
+      <div class="form-group">
+        <label for="name">Your Name</label>
+        <input type="text" id="name" name="name" required
+               placeholder="Jane Doe" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required
+               placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Password <small>(min 6 chars)</small></label>
+        <input type="password" id="password" name="password" required
+               placeholder="••••••••" autocomplete="new-password" minlength="6">
+      </div>
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" required
+               placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn-primary btn-full">Seal the Deal →</button>
+    </form>
+
+    <p class="auth-switch">
+      Already have an account? <a href="{{ url_for('main.login') }}">Log in</a>
+    </p>
+  </div>
+  <div class="auth-deco">
+    <div class="wax-seal">F·E</div>
+    <p class="tagline">"The best time to send<br>a message was yesterday.<br>The second best is now."</p>
+  </div>
+</div>
+{% endblock %}

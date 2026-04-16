@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Future Envelope{% endblock %}
+{% block content %}
+<div class="dashboard">
+
+  <!-- Header -->
+  <header class="dash-header">
+    <div>
+      <h1>Your Envelopes</h1>
+      <p class="dash-subtitle">{{ current_user.display_name }}'s time-capsule collection</p>
+    </div>
+    <a href="{{ url_for('main.compose') }}" class="btn-primary">✉ New Message</a>
+  </header>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-num">{{ scheduled|length }}</span>
+      <span class="stat-label">Sealed &amp; Waiting</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">{{ sent|selectattr('status','equalto','sent')|list|length }}</span>
+      <span class="stat-label">Delivered</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">{{ sent|selectattr('status','equalto','failed')|list|length }}</span>
+      <span class="stat-label">Failed</span>
+    </div>
+  </div>
+
+  <!-- Scheduled -->
+  <section class="email-section">
+    <h2 class="section-title">⏳ Sealed &amp; Scheduled</h2>
+
+    {% if scheduled %}
+      <div class="email-grid" id="scheduled-grid">
+        {% for email in scheduled %}
+        <div class="envelope-card" data-id="{{ email.id }}"
+             data-scheduled="{{ email.scheduled_at.isoformat() }}">
+          <div class="env-header">
+            {% if email.is_private %}
+              <span class="badge badge-private">📬 Private</span>
+            {% endif %}
+            <span class="env-to">→ {{ email.recipient }}</span>
+          </div>
+          <h3 class="env-subject">{{ email.subject }}</h3>
+          <p class="env-preview">{{ email.body[:120] }}{% if email.body|length > 120 %}…{% endif %}</p>
+
+          <div class="env-footer">
+            <div class="countdown" data-target="{{ email.scheduled_at.isoformat() }}">
+              Loading…
+            </div>
+            <div class="env-actions">
+              <a href="{{ url_for('main.view_email', email_id=email.id) }}" class="btn-sm">View</a>
+              <a href="{{ url_for('main.edit_email', email_id=email.id) }}" class="btn-sm btn-edit">Edit</a>
+              <form method="POST" action="{{ url_for('main.delete_email', email_id=email.id) }}"
+                    onsubmit="return confirm('Delete this scheduled email?')" style="display:inline">
+                <button type="submit" class="btn-sm btn-delete">Delete</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No messages waiting to be sent.</p>
+        <a href="{{ url_for('main.compose') }}" class="btn-primary">Write your first message</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- Sent / Failed -->
+  <section class="email-section">
+    <h2 class="section-title">📬 Sent History</h2>
+
+    {% if sent %}
+      <div class="sent-list">
+        {% for email in sent %}
+        <div class="sent-row {% if email.status == 'failed' %}sent-failed{% endif %}">
+          <div class="sent-meta">
+            <span class="sent-status">
+              {% if email.status == 'sent' %}✅{% else %}❌{% endif %}
+            </span>
+            <span class="sent-to">{{ email.recipient }}</span>
+            <span class="sent-date">
+              {{ email.sent_at.strftime('%b %d, %Y %H:%M') if email.sent_at else 'N/A' }}
+            </span>
+          </div>
+          <div class="sent-subject">
+            <a href="{{ url_for('main.view_email', email_id=email.id) }}">{{ email.subject }}</a>
+          </div>
+          {% if email.status == 'failed' and email.error_message %}
+          <div class="sent-error">⚠ {{ email.error_message[:80] }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state small">
+        <p>No sent mail yet.</p>
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  // Kick off countdown timers as soon as the page loads
+  initCountdowns();
+  // Refresh countdown data from the API every 30 seconds
+  setInterval(refreshCountdowns, 30000);
+</script>
+{% endblock %}
