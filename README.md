@@ -7,7 +7,7 @@
 
 
 # Author 
-Heart Shiana K. Ursua
+Heart Shiana Ursua
 
 
 <img width="1364" height="703" alt="1" src="https://github.com/user-attachments/assets/d4a85ba1-1bbf-486b-8791-beb8e44471da" />
