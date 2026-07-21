@@ -14,7 +14,8 @@ from models import User, Email, Attachment
 main = Blueprint('main', __name__)
 
 MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
-MAX_ATTACHMENTS      = 3
+MAX_ATTACHMENTS      = 8
+MAX_PHOTOS           = 6
 
 COMMON_TIMEZONES = [
     'UTC','US/Eastern','US/Central','US/Mountain','US/Pacific',
@@ -22,6 +23,22 @@ COMMON_TIMEZONES = [
     'Asia/Shanghai','Asia/Kolkata','Asia/Manila','Australia/Sydney',
     'America/Sao_Paulo','Africa/Nairobi',
 ]
+
+
+def _save_attachments(email, files):
+    """Persist uploaded files (photo-strip images + other attachments) onto an email."""
+    for f in files:
+        if not f or not f.filename: continue
+        data = f.read()
+        if len(data) > MAX_ATTACHMENT_BYTES:
+            flash(f'{f.filename} exceeds 10 MB limit.', 'error'); continue
+        if email.attachments.count() >= MAX_ATTACHMENTS:
+            flash(f'Max {MAX_ATTACHMENTS} attachments allowed.', 'error'); break
+        db.session.add(Attachment(
+            email_id=email.id, filename=f.filename,
+            mime_type=f.mimetype or 'application/octet-stream',
+            data=data, size_bytes=len(data)
+        ))
 
 
 # ── Root ──────────────────────────────────────────────────
@@ -125,7 +142,8 @@ def compose():
                 body = encrypt_body(current_app._get_current_object(), body)
             except RuntimeError as e:
                 flash(str(e), 'error')
-                return render_template('compose.html', prefill=request.form, now=datetime.utcnow())
+                return render_template('compose.html', prefill=request.form, now=datetime.utcnow(),
+                                       max_photos=MAX_PHOTOS, max_attachments=MAX_ATTACHMENTS)
 
         errors = []
         if not is_private and (not recipient or '@' not in recipient):
@@ -146,7 +164,8 @@ def compose():
 
         if errors:
             for e in errors: flash(e, 'error')
-            return render_template('compose.html', prefill=request.form, now=datetime.utcnow())
+            return render_template('compose.html', prefill=request.form, now=datetime.utcnow(),
+                                   max_photos=MAX_PHOTOS, max_attachments=MAX_ATTACHMENTS)
 
         email = Email(
             user_id=current_user.id, recipient=recipient, subject=subject,
@@ -156,24 +175,14 @@ def compose():
         db.session.add(email)
         db.session.flush()
 
-        for f in request.files.getlist('attachments'):
-            if not f or not f.filename: continue
-            data = f.read()
-            if len(data) > MAX_ATTACHMENT_BYTES:
-                flash(f'{f.filename} exceeds 10 MB limit.', 'error'); continue
-            if email.attachments.count() >= MAX_ATTACHMENTS:
-                flash(f'Max {MAX_ATTACHMENTS} attachments allowed.', 'error'); break
-            db.session.add(Attachment(
-                email_id=email.id, filename=f.filename,
-                mime_type=f.mimetype or 'application/octet-stream',
-                data=data, size_bytes=len(data)
-            ))
+        _save_attachments(email, request.files.getlist('attachments'))
 
         db.session.commit()
         flash('✉ Your message has been sealed and scheduled!', 'success')
         return redirect(url_for('main.dashboard'))
 
-    return render_template('compose.html', prefill={}, now=datetime.utcnow())
+    return render_template('compose.html', prefill={}, now=datetime.utcnow(),
+                           max_photos=MAX_PHOTOS, max_attachments=MAX_ATTACHMENTS)
 
 
 # ── Edit ──────────────────────────────────────────────────
@@ -205,11 +214,18 @@ def edit_email(email_id):
             except ValueError:
                 flash('Invalid date/time format.', 'error')
 
+        _save_attachments(email, request.files.getlist('attachments'))
+
         db.session.commit()
         flash('✏️ Email updated.', 'success')
         return redirect(url_for('main.dashboard'))
 
-    return render_template('edit.html', email=email)
+    att_list = email.attachments.all()
+    photo_attachments = [a for a in att_list if a.mime_type.startswith('image/')]
+    other_attachments = [a for a in att_list if not a.mime_type.startswith('image/')]
+    return render_template('edit.html', email=email,
+                           photo_attachments=photo_attachments, other_attachments=other_attachments,
+                           max_photos=MAX_PHOTOS, max_attachments=MAX_ATTACHMENTS)
 
 
 # ── Delete ────────────────────────────────────────────────

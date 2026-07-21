@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Edit Email · Future Envelope{% endblock %}
+{% block content %}
+<div class="compose-page">
+  <div class="compose-card">
+    <div class="compose-header">
+      <h1>✏️ Edit Scheduled Message</h1>
+      <p>Unseal, revise, and reseal before it's too late.</p>
+    </div>
+
+    <form method="POST" class="compose-form" id="compose-form" enctype="multipart/form-data">
+
+      <div class="private-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" name="is_private" id="is_private"
+                 {% if email.is_private %}checked{% endif %}>
+          <span class="toggle-switch"></span>
+          <span>📬 Private Letter to Self</span>
+        </label>
+      </div>
+
+      <div class="form-group" id="recipient-group">
+        <label for="recipient">To</label>
+        <input type="email" id="recipient" name="recipient"
+               value="{{ email.recipient }}" placeholder="recipient@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="subject">Subject</label>
+        <input type="text" id="subject" name="subject" required
+               value="{{ email.subject }}">
+      </div>
+
+      <div class="form-group">
+        <label for="body">📝 Note to Your Future Self</label>
+        <textarea id="body" name="body" required rows="10">{{ email.body }}</textarea>
+        <div class="char-counter"><span id="char-count">{{ email.body|length }}</span> characters</div>
+      </div>
+
+      <!-- Existing photo strip -->
+      {% if photo_attachments %}
+      <div class="form-group">
+        <label>📸 Photo Strip</label>
+        <div class="photo-strip photo-strip-existing">
+          {% for att in photo_attachments %}
+          <div class="photo-frame">
+            <img src="{{ url_for('main.download_attachment', att_id=att.id) }}" alt="{{ att.filename }}">
+            <form method="POST" action="{{ url_for('main.delete_attachment', att_id=att.id) }}"
+                  onsubmit="return confirm('Remove this photo?')" class="photo-frame-remove-form">
+              <button type="submit" class="photo-frame-remove" title="Remove photo">✕</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Add more photos -->
+      <div class="form-group">
+        <label>📸 Add More Photos <small>(optional · up to {{ max_photos }} total)</small></label>
+        <input type="file" id="photo-input" name="attachments" accept="image/*" multiple hidden>
+        <div class="photo-strip-editor">
+          <div id="photo-strip" class="photo-strip"></div>
+          <button type="button" id="add-photo-btn" class="add-photo-tile">
+            <span class="add-photo-icon">＋</span>
+            <span>Add Photos</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="scheduled_at">📅 Deliver On</label>
+        <input type="datetime-local" id="scheduled_at" name="scheduled_at" required
+               value="{{ email.scheduled_at.strftime('%Y-%m-%dT%H:%M') }}">
+      </div>
+
+      <div class="presets">
+        <span class="preset-label">Quick presets:</span>
+        <button type="button" class="preset-btn" data-offset="3600">1 Hour</button>
+        <button type="button" class="preset-btn" data-offset="86400">Tomorrow</button>
+        <button type="button" class="preset-btn" data-offset="604800">1 Week</button>
+        <button type="button" class="preset-btn" data-offset="2592000">1 Month</button>
+        <button type="button" class="preset-btn" data-offset="31536000">1 Year</button>
+      </div>
+
+      <!-- Other file attachments -->
+      {% if other_attachments %}
+      <div class="form-group">
+        <label>📎 Other Files</label>
+        <div class="attachments-box">
+          {% for att in other_attachments %}
+          <div class="att-row">
+            <span class="att-icon">{{ '📄' if 'pdf' in att.mime_type else '📁' }}</span>
+            <span class="att-name">{{ att.filename }}</span>
+            <span class="att-size">{{ att.size_human }}</span>
+            <a href="{{ url_for('main.download_attachment', att_id=att.id) }}" class="btn-sm">Download</a>
+            <form method="POST" action="{{ url_for('main.delete_attachment', att_id=att.id) }}"
+                  onsubmit="return confirm('Remove this attachment?')" style="display:inline">
+              <button type="submit" class="btn-sm btn-delete">✕</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label for="attachments">📎 Add Other Files <small>(optional)</small></label>
+        <input type="file" id="attachments" name="attachments" multiple
+               accept="*/*" class="file-input">
+        <div id="file-preview" class="file-preview"></div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary">Save Changes →</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  initComposePage({ maxPhotos: {{ max_photos }}, maxAttachments: {{ max_attachments }} });
+</script>
+{% endblock %}
